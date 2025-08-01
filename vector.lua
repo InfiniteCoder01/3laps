@@ -4,6 +4,10 @@ Vector.__index = Vector
 
 -- vector constructor:
 function Vector.new(x, y, z)
+  if getmetatable(x) == Vector then
+  	return Vector.new(x.x, x.y, y)
+  end
+
   local v = {x = x or 0, y = y or 0, z = z}
   setmetatable(v, Vector)
   return v
@@ -73,3 +77,13 @@ end
 function Vector.floor(v)
 	return Vector.new(math.floor(v.x), math.floor(v.y), v.z and math.floor(v.z))
 end
+
+-- vector magnitude:
+function Vector.magnitudeSquared(v)
+	return v.x * v.x + v.y * v.y + (v.z and v.z * v.z or 0)
+end
+
+function Vector.magnitude(v)
+	return math.sqrt(v:magnitudeSquared())
+end
+

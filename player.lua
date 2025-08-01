@@ -1,16 +1,27 @@
+PLAYER_START = Vector.new(96, 96 + Level.LAYER_OFFSET)
 local player = {
     size = Vector.new(10, 4),
 
     velocity = Vector.new(0, 0, 0),
-    position = Vector.new(128, 128, 1),
-    lastPosition = Vector.new(128, 128, 1),
-    cameraPosition = Vector.new(128, 128),
-    lastCameraPosition = Vector.new(128, 128),
+    position = Vector.new(PLAYER_START, 1),
+    lastPosition = nil,
+    cameraPosition = nil,
+    lastCameraPosition = nil,
     shadowZ = 1,
     lastShadowZ = 1,
 }
 
 function player:update(level)
+    -- Sample pixels thoughout the whole collider
+    local function sample3(pos)
+        local zLeft, gLeft, bLeft = level:getPixel(pos - Vector.new(self.size.x / 2, 0, 0))
+        local z, g, b = level:getPixel(pos)
+        local zRight, gRight, bRight = level:getPixel(pos + Vector.new(self.size.x / 2, 0, 0))
+        if zLeft > z then z, g, b = zLeft, gLeft, bLeft end
+        if zRight > z then z, g, b = zRight, gRight, bRight end
+        return z, g, b
+    end
+
     -- Player controls
     local function ikey(keys)
         for key in keys:gmatch("%w+") do
@@ -25,24 +36,16 @@ function player:update(level)
     )
 
     do
-        local z, _, _ = level:getPixel(self.position)
+        local z, _, _ = sample3(self.position)
         local targetVelocity = wasd * 3
         self.velocity.x = self.velocity.x + (targetVelocity.x - self.velocity.x) * 0.5
         self.velocity.y = self.velocity.y + (targetVelocity.y - self.velocity.y) * 0.5
-        self.velocity.z = self.velocity.z - 0.2
+        self.velocity.z = self.velocity.z - 0.1
         if love.keyboard.isDown("space") and self.position.z <= z + 0.06 then
-            self.velocity.z = 0.6
+            self.velocity.z = 0.3
         end
     end
 
-    -- Sample pixels thoughout the whole collider
-    function sample3(pos)
-        local zLeft = level:getPixel(pos - Vector.new(self.size.x / 2, 0, 0))
-        local zMid = level:getPixel(pos)
-        local zRight = level:getPixel(pos + Vector.new(self.size.x / 2, 0, 0))
-        return math.max(zLeft, zMid, zRight)
-    end
-    
     -- Integrate
     local function moveInSteps(v, stepSize)
         local STEP_HEIGHT = 0.1
@@ -73,6 +76,7 @@ function player:update(level)
     if moveInSteps(self.velocity * Vector.new(1, 0, 0), 1) then self.velocity.x = 0 end
     if moveInSteps(self.velocity * Vector.new(0, 1, 0), 1) then self.velocity.y = 0 end
     if moveInSteps(self.velocity * Vector.new(0, 0, 1), 0.05) then self.velocity.z = 0 end
+    print(self.position)
 
     -- Shadow
     self.lastShadowZ = self.shadowZ
@@ -81,8 +85,14 @@ function player:update(level)
     -- Update camera
     do
         self.lastCameraPosition = self.cameraPosition
-        local targetCameraPosition = self.position + self.velocity * 30
-        self.cameraPosition = self.cameraPosition + (targetCameraPosition - self.cameraPosition) * 0.05
+        local targetCameraPosition = self.position - Vector.new(0, self.position.z * Level.LAYER_OFFSET) + self.velocity * 30
+        if not self.cameraPosition then
+            self.cameraPosition = targetCameraPosition
+            self.lastCameraPosition = self.cameraPosition
+        else
+            local lerp = self.velocity:magnitudeSquared() < 0.05 and 0.3 or 0.05
+            self.cameraPosition = self.cameraPosition + (targetCameraPosition - self.cameraPosition) * lerp
+        end
     end
 end
 

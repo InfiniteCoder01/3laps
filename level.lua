@@ -1,6 +1,6 @@
 Level = {}
 Level.__index = Level
-Level.LAYER_OFFSET = 8
+Level.LAYER_OFFSET = 12
 
 function Level.load(path, layerCount)
     local level = { layers = {} }
@@ -31,16 +31,13 @@ function Level:getPixel(pos)
     for layerZ = math.floor(pos.z), 1, -1 do
         local layer = self.layers[layerZ]
 
-        for offset = Level.LAYER_OFFSET, 0, -1 do
-            local uv = Vector.new(pos.x, pos.y - layerZ * Level.LAYER_OFFSET - offset)
-            local r, g, b, a = sample(layer, uv)
-            if a < 0.5 then goto continue end
-            if math.abs(r - offset / Level.LAYER_OFFSET) < 0.5 / Level.LAYER_OFFSET then
-                r = layerZ + r
-                return r, g, b
-            end
-            ::continue::
+        local uv = Vector.new(pos.x, pos.y - layerZ * Level.LAYER_OFFSET)
+        local r, g, b, a = sample(layer, uv)
+        if a >= 0.5 then
+            r = layerZ + r
+            return r, g, b
         end
+        ::continue::
     end
     return 1, 0, 0
 end
