@@ -1,17 +1,22 @@
 PLAYER_START = Vector.new(96, 96 + Level.LAYER_OFFSET)
-local player = {
-    size = Vector.new(10, 4),
+Player = {}
+Player.__index = Player
 
-    velocity = Vector.new(0, 0, 0),
-    position = Vector.new(PLAYER_START, 1),
-    lastPosition = nil,
-    cameraPosition = nil,
-    lastCameraPosition = nil,
-    shadowZ = 1,
-    lastShadowZ = 1,
-}
+function Player.new()
+    local player = {
+        size = Vector.new(10, 4),
 
-function player:update(level)
+        velocity = Vector.new(0, 0, 0),
+        position = Vector.new(PLAYER_START, 1),
+        lastPosition = nil,
+        shadowZ = 1,
+        lastShadowZ = 1,
+    }
+    setmetatable(player, Player)
+    return player
+end
+
+function Player:update(level)
     -- Sample pixels thoughout the whole collider
     local function sample3(pos)
         local zLeft, gLeft, bLeft = level:getPixel(pos - Vector.new(self.size.x / 2, 0, 0))
@@ -76,24 +81,28 @@ function player:update(level)
     if moveInSteps(self.velocity * Vector.new(1, 0, 0), 1) then self.velocity.x = 0 end
     if moveInSteps(self.velocity * Vector.new(0, 1, 0), 1) then self.velocity.y = 0 end
     if moveInSteps(self.velocity * Vector.new(0, 0, 1), 0.05) then self.velocity.z = 0 end
-    print(self.position)
 
     -- Shadow
     self.lastShadowZ = self.shadowZ
     self.shadowZ = sample3(self.position)
-
-    -- Update camera
-    do
-        self.lastCameraPosition = self.cameraPosition
-        local targetCameraPosition = self.position - Vector.new(0, self.position.z * Level.LAYER_OFFSET) + self.velocity * 30
-        if not self.cameraPosition then
-            self.cameraPosition = targetCameraPosition
-            self.lastCameraPosition = self.cameraPosition
-        else
-            local lerp = self.velocity:magnitudeSquared() < 0.05 and 0.3 or 0.05
-            self.cameraPosition = self.cameraPosition + (targetCameraPosition - self.cameraPosition) * lerp
-        end
-    end
 end
 
-return player
+function Player:interpolatedLayer(interpolate)
+    return math.floor(interpolate(self.position, self.lastPosition).z)
+end
+
+function Player:draw(interpolate)
+    local pos = interpolate(self.position, self.lastPosition)
+
+    -- Shadow
+    local shadowZ = interpolate(self.shadowZ, self.lastShadowZ)
+    love.graphics.setColor(0, 0.0, 0.0, 0.3)
+    love.graphics.ellipse("fill", pos.x, pos.y - shadowZ * Level.LAYER_OFFSET, self.size.x / 2, self.size.y / 2)
+
+    -- Player
+    love.graphics.setColor(1, 0, 0, 1)
+    local w, h = 8, 16
+    local x, y = pos.x - w / 2, pos.y - pos.z * Level.LAYER_OFFSET - h
+    love.graphics.rectangle("fill", x, y, w, h)
+    love.graphics.setColor(1, 1, 1, 1)
+end
