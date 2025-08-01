@@ -1,4 +1,4 @@
-PLAYER_START = Vector.new(96, 96 + Level.LAYER_OFFSET)
+PLAYER_START = Vector.new(96, 96)
 Player = {}
 Player.__index = Player
 
@@ -7,10 +7,10 @@ function Player.new()
         size = Vector.new(10, 4),
 
         velocity = Vector.new(0, 0, 0),
-        position = Vector.new(PLAYER_START, 1),
+        position = Vector.new(PLAYER_START, 0),
         lastPosition = nil,
-        shadowZ = 1,
-        lastShadowZ = 1,
+        shadowZ = 0,
+        lastShadowZ = 0,
     }
     setmetatable(player, Player)
     return player
@@ -39,22 +39,25 @@ function Player:update(level)
         ikey("d l right") - ikey("a h left"),
         ikey("s j down") - ikey("w k up")
     )
+    local jump = love.keyboard.isDown("space")
+    local sneak = love.keyboard.isDown("lshift")
 
+    local grounded
     do
         local z, _, _ = sample3(self.position)
-        local targetVelocity = wasd * 3
+        grounded = self.position.z <= z + 0.06
+        local targetVelocity = wasd * (grounded and 3 or 4)
         self.velocity.x = self.velocity.x + (targetVelocity.x - self.velocity.x) * 0.5
         self.velocity.y = self.velocity.y + (targetVelocity.y - self.velocity.y) * 0.5
-        self.velocity.z = self.velocity.z - 0.1
-        if love.keyboard.isDown("space") and self.position.z <= z + 0.06 then
-            self.velocity.z = 0.3
+        self.velocity.z = self.velocity.z - 1.2
+        if jump and grounded then
+            self.velocity.z = 3.6
         end
     end
 
     -- Integrate
     local function moveInSteps(v, stepSize)
-        local STEP_HEIGHT = 0.1
-        local EPS = 0.0001
+        local STEP_HEIGHT = 1.0
 
         local total = math.abs(v.x + v.y + v.z) / stepSize
         local step = v / total
@@ -64,13 +67,15 @@ function Player:update(level)
             local z = sample3(pos)
             if pos.z <= z then
                 if v.z ~= 0 then
-                    self.position.z = z + EPS
+                    self.position.z = z
                     return true
                 end
 
                 if pos.z + STEP_HEIGHT >= z then
-                    pos.z = z + EPS
+                    pos.z = z
                 else return true end
+            elseif sneak and grounded and pos.z - STEP_HEIGHT > z and v.z == 0 then
+                return true
             end
             self.position = pos
         end
@@ -87,22 +92,18 @@ function Player:update(level)
     self.shadowZ = sample3(self.position)
 end
 
-function Player:interpolatedLayer(interpolate)
-    return math.floor(interpolate(self.position, self.lastPosition).z)
-end
-
 function Player:draw(interpolate)
     local pos = interpolate(self.position, self.lastPosition)
 
     -- Shadow
     local shadowZ = interpolate(self.shadowZ, self.lastShadowZ)
     love.graphics.setColor(0, 0.0, 0.0, 0.3)
-    love.graphics.ellipse("fill", pos.x, pos.y - shadowZ * Level.LAYER_OFFSET, self.size.x / 2, self.size.y / 2)
+    love.graphics.ellipse("fill", pos.x, pos.y - shadowZ, self.size.x / 2, self.size.y / 2)
 
     -- Player
     love.graphics.setColor(1, 0, 0, 1)
     local w, h = 8, 16
-    local x, y = pos.x - w / 2, pos.y - pos.z * Level.LAYER_OFFSET - h
+    local x, y = pos.x - w / 2, pos.y - pos.z - h
     love.graphics.rectangle("fill", x, y, w, h)
     love.graphics.setColor(1, 1, 1, 1)
 end

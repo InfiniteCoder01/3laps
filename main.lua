@@ -16,7 +16,6 @@ function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
     level = Level.load("levels/jungle_rush/", 3)
     player = Player.new()
-
     CANVAS = love.graphics.newCanvas(SIZE.x, SIZE.y)
 end
 
@@ -25,7 +24,7 @@ local function fixedUpdate()
 
     -- Update camera
     do
-        local targetCameraPosition = player.position - Vector.new(0, player.position.z * Level.LAYER_OFFSET) + player.velocity * 30
+        local targetCameraPosition = player.position - Vector.new(0, player.position.z) + player.velocity * 30
         if not camera.position then
             camera.position = targetCameraPosition
             camera.lastPosition = camera.position
@@ -46,34 +45,40 @@ local function draw(interpolate)
         love.graphics.translate(offset.x, offset.y)
     end
 
-    love.graphics.clear(level.layers[1].background)
-
     local playerRegion = nil
+    local playersToRender = { player }
     for i, layer in ipairs(level.layers) do
-        -- Draw player (possibly occluded)
-        if player:interpolatedLayer(interpolate) == i - 1 then
-            player:draw(interpolate)
+        -- Player rendering
+        for j = #playersToRender, 1, -1 do
+            local p = playersToRender[j]
+            local pos = interpolate(p.position, p.lastPosition)
+            local r, _, _, a = level:sampleDown(i, pos)
+            if a and pos.z + 2.0 < r then
+                table.remove(playersToRender, j)
+                p:draw(interpolate)
 
-            -- Save the region
-            love.graphics.setCanvas()
-            local pos = interpolate(player.position, player.lastPosition)
-            local x, y = love.graphics.transformPoint(pos.x, pos.y - pos.z * Level.LAYER_OFFSET)
-            local w, h = 12, 21
-            x, y = math.floor(x - w / 2), math.floor(y - h + 3)
+                -- Save the region (TODO: Filtering)
+                love.graphics.setCanvas()
+                local x, y = love.graphics.transformPoint(pos.x, pos.y - pos.z)
+                local w, h = 12, 21
+                x, y = math.floor(x - w / 2), math.floor(y - h + 3)
 
-            playerRegion = {
-                x = x, y = y,
-                image = love.graphics.newImage(CANVAS:newImageData(0, nil, x, y, w, h)),
-            }
-            love.graphics.setCanvas(CANVAS)
+                playerRegion = {
+                    x = x, y = y,
+                    image = love.graphics.newImage(CANVAS:newImageData(0, nil, x, y, w, h)),
+                }
+                love.graphics.setCanvas(CANVAS)
+            end
         end
 
         -- Draw layer
         love.graphics.draw(layer.image)
     end
-    if player:interpolatedLayer(interpolate) >= #level.layers then player:draw(interpolate) end
-    love.graphics.pop()
 
+    -- Finish rendering players
+    for _, p in ipairs(playersToRender) do p:draw(interpolate) end
+
+    love.graphics.pop()
     if playerRegion then
         love.graphics.setColor(1, 1, 1, 0.1)
         love.graphics.draw(playerRegion.image, playerRegion.x, playerRegion.y)

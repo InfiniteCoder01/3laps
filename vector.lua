@@ -87,3 +87,8 @@ function Vector.magnitude(v)
 	return math.sqrt(v:magnitudeSquared())
 end
 
+-- vector normalization:
+function Vector.normalized(v)
+	return v / v:magnitude()
+end
+

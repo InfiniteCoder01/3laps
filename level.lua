@@ -1,43 +1,47 @@
 Level = {}
 Level.__index = Level
-Level.LAYER_OFFSET = 12
 
-function Level.load(path, layerCount)
+function Level.load(path, count)
     local level = { layers = {} }
-    for i =1,layerCount do
-        local data = love.image.newImageData(path .. i .. ".png")
+    for i = 1, count do
+        local data = love.image.newImageData(path .. (i * 2 - 1) .. ".png")
+        local map = love.image.newImageData(path .. (i * 2) .. ".png")
         level.layers[i] = {
-            background = { data:getPixel(0, 0) },
             image = love.graphics.newImage(data),
-            map = love.image.newImageData(path .. i .. ".map.png"),
+            map = map,
         }
     end
     setmetatable(level, Level)
     return level
 end
 
-function Level:getPixel(pos)
-    local function sample(layer, uv)
-        if not layer or uv.x < 0 or uv.y < 0 or uv.x >= layer.map:getWidth() or uv.y >= layer.map:getHeight() then
-            return 0, 0, 0, 0
-        end
-        return layer.map:getPixel(uv.x, uv.y)
+function Level:sample(layer, uv)
+    layer = self.layers[layer]
+    if not layer or uv.x < 0 or uv.y < 0 or uv.x >= layer.map:getWidth() or uv.y >= layer.map:getHeight() then
+        return 0, 0, 0, false
     end
+    local r, g, b, a = layer.map:getPixel(uv.x, uv.y)
+    return math.ceil(r * 255 / 8), g, b, a >= 0.5
+end
 
-    if math.fmod(pos.z, 1) >= 0.9 then
-        pos = Vector.new(pos.x, pos.y, math.floor(pos.z + 0.1))
+function Level:sampleDown(layer, uv)
+    layer = self.layers[layer]
+    if not layer or uv.x < 0 or uv.y < 0 or uv.x >= layer.map:getWidth() or uv.y >= layer.map:getHeight() then
+        return 0, 0, 0, true
     end
-
-    for layerZ = math.floor(pos.z), 1, -1 do
-        local layer = self.layers[layerZ]
-
-        local uv = Vector.new(pos.x, pos.y - layerZ * Level.LAYER_OFFSET)
-        local r, g, b, a = sample(layer, uv)
+    for y = uv.y, layer.map:getHeight() - 1 do
+        local r, g, b, a = layer.map:getPixel(uv.x, y)
         if a >= 0.5 then
-            r = layerZ + r
-            return r, g, b
+            return math.ceil(r * 255 / 8), g, b, true
         end
-        ::continue::
+    end
+    return 0, 0, 0, false
+end
+
+function Level:getPixel(pos)
+    for i = #self.layers, 1, -1 do
+        local r, g, b, a = self:sample(i, pos)
+        if a then return r, g, b end
     end
     return 1, 0, 0
 end
