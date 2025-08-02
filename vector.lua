@@ -60,20 +60,33 @@ end
 
 -- vector < comparison:
 function Vector.__lt(a, b)
-	 return a.x < b.x and a.y < b.y and (not a.z or not b.z or a.z < b.z)
+	return a.x < b.x and a.y < b.y and (not a.z or not b.z or a.z < b.z)
 end
 
 -- vector <= comparison:
 function Vector.__le(a, b)
-	 return a.x <= b.x and a.y <= b.y and (not a.z or not b.z or a.z <= b.z)
+	return a.x <= b.x and a.y <= b.y and (not a.z or not b.z or a.z <= b.z)
 end
 
 -- vector value string output:
 function Vector.__tostring(v)
-	 return "(" .. v.x .. ", " .. v.y .. (v.z and ", " .. v.z or "") .. ")"
+	local function ff(x)
+		if math.abs(x) < 1 then
+			return tostring(x)
+		else
+			return string.format("%.2f", x)
+		end
+	end
+
+	return "(" .. ff(v.x) .. ", " .. ff(v.y) .. (v.z and ", " .. ff(v.z) or "") .. ")"
 end
 
--- Vector flooring
+-- Vector rounding
+function Vector.round(v)
+	local function round(x) return math.floor(x + 0.5) end
+	return Vector.new(round(v.x), round(v.y), v.z and round(v.z))
+end
+
 function Vector.floor(v)
 	return Vector.new(math.floor(v.x), math.floor(v.y), v.z and math.floor(v.z))
 end

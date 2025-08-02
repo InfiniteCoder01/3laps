@@ -14,7 +14,7 @@ local player
 local camera = { lastPosition = nil, position = nil }
 function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
-    level = Level.load("levels/jungle_rush/", 3)
+    level = Level.load("levels/jungle_rush/", 4)
     player = Player.new()
     CANVAS = love.graphics.newCanvas(SIZE.x, SIZE.y)
 end
@@ -25,6 +25,8 @@ local function fixedUpdate()
     -- Update camera
     do
         local targetCameraPosition = player.position - Vector.new(0, player.position.z) + player.velocity * 30
+        targetCameraPosition.x = math.min(math.max(targetCameraPosition.x, SIZE.x / 2), level.width - SIZE.x / 2)
+        targetCameraPosition.y = math.min(math.max(targetCameraPosition.y, SIZE.y / 2), level.height - SIZE.y / 2)
         if not camera.position then
             camera.position = targetCameraPosition
             camera.lastPosition = camera.position
@@ -53,21 +55,24 @@ local function draw(interpolate)
             local p = playersToRender[j]
             local pos = interpolate(p.position, p.lastPosition)
             local r, _, _, a = level:sampleDown(i, pos)
-            if a and pos.z + 2.0 < r then
+            if a >= 0.5 and pos.z + 2.0 < r then
                 table.remove(playersToRender, j)
                 p:draw(interpolate)
 
                 -- Save the region (TODO: Filtering)
-                love.graphics.setCanvas()
                 local x, y = love.graphics.transformPoint(pos.x, pos.y - pos.z)
                 local w, h = 12, 21
                 x, y = math.floor(x - w / 2), math.floor(y - h + 3)
-
-                playerRegion = {
-                    x = x, y = y,
-                    image = love.graphics.newImage(CANVAS:newImageData(0, nil, x, y, w, h)),
-                }
-                love.graphics.setCanvas(CANVAS)
+                x, y = math.min(math.max(x, 0), SIZE.x - 1), math.min(math.max(y, 0), SIZE.y - 1)
+                w, h = math.min(w, SIZE.y - x), math.min(h, SIZE.y - y)
+                if w > 0 and h > 0 then
+                    love.graphics.setCanvas()
+                    playerRegion = {
+                        x = x, y = y,
+                        image = love.graphics.newImage(CANVAS:newImageData(0, nil, x, y, w, h)),
+                    }
+                    love.graphics.setCanvas(CANVAS)
+                end
             end
         end
 
@@ -114,7 +119,7 @@ function love.draw()
     local w, h = love.graphics.getDimensions()
     local scale = math.min(w / SIZE.x, h / SIZE.y)
     local size = SIZE * scale
-    local offset = (Vector.new(w, h) - size) / 2
+    local offset = ((Vector.new(w, h) - size) / 2):round()
     love.graphics.translate(offset.x, offset.y)
     love.graphics.scale(scale)
     love.graphics.draw(CANVAS)

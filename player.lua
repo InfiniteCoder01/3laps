@@ -9,6 +9,7 @@ function Player.new()
         velocity = Vector.new(0, 0, 0),
         position = Vector.new(PLAYER_START, 0),
         lastPosition = nil,
+        lastJump = false,
         shadowZ = 0,
         lastShadowZ = 0,
     }
@@ -46,14 +47,18 @@ function Player:update(level)
     do
         local z, _, _ = sample3(self.position)
         grounded = self.position.z <= z + 0.06
-        local targetVelocity = wasd * (grounded and 3 or 4)
+        local targetVelocity = wasd * (sneak and 2 or grounded and 3 or 4)
         self.velocity.x = self.velocity.x + (targetVelocity.x - self.velocity.x) * 0.5
         self.velocity.y = self.velocity.y + (targetVelocity.y - self.velocity.y) * 0.5
-        self.velocity.z = self.velocity.z - 1.2
+        self.velocity.z = self.velocity.z - 0.8
         if jump and grounded then
             self.velocity.z = 3.6
+        elseif not jump and self.lastJump and self.velocity.z > 0 then
+            self.velocity.z = self.velocity.z * 0.5
         end
     end
+
+    self.lastJump = jump
 
     -- Integrate
     local function moveInSteps(v, stepSize)
@@ -67,7 +72,7 @@ function Player:update(level)
             local z = sample3(pos)
             if pos.z <= z then
                 if v.z ~= 0 then
-                    self.position.z = z
+                    if v.z < 0 then self.position.z = z end
                     return true
                 end
 
@@ -94,16 +99,19 @@ end
 
 function Player:draw(interpolate)
     local pos = interpolate(self.position, self.lastPosition)
+	local function round(x) return math.floor(x + 0.5) end
 
     -- Shadow
     local shadowZ = interpolate(self.shadowZ, self.lastShadowZ)
     love.graphics.setColor(0, 0.0, 0.0, 0.3)
-    love.graphics.ellipse("fill", pos.x, pos.y - shadowZ, self.size.x / 2, self.size.y / 2)
+    love.graphics.ellipse("fill",
+        round(pos.x), round(pos.y - shadowZ),
+        self.size.x / 2, self.size.y / 2)
 
     -- Player
     love.graphics.setColor(1, 0, 0, 1)
     local w, h = 8, 16
-    local x, y = pos.x - w / 2, pos.y - pos.z - h
+    local x, y = round(pos.x - w / 2), round(pos.y - pos.z - h)
     love.graphics.rectangle("fill", x, y, w, h)
     love.graphics.setColor(1, 1, 1, 1)
 end
