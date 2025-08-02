@@ -1,15 +1,29 @@
 Level = {}
 Level.__index = Level
 
-function Level.load(path, count)
-    local level = { layers = {} }
-    for i = 1, count do
-        local data = love.image.newImageData(path .. (i * 2 - 1) .. ".png")
-        local map = love.image.newImageData(path .. (i * 2) .. ".png")
-        level.layers[i] = {
-            image = love.graphics.newImage(data),
-            map = map,
-        }
+function Level.load(path)
+    local level = { layers = {}, checkpoints = 0 }
+    local files = love.filesystem.getDirectoryItems(path)
+    for _, file in ipairs(files) do
+        local idx_str = file:gmatch("%d+")()
+        if idx_str then -- Layer image
+            local idx = tonumber(idx_str)
+            local li = math.floor((idx + 1) / 2)
+            file = path .. "/" .. file
+
+            if not level.layers[li] then level.layers[li] = {} end
+            if idx % 2 == 1 then level.layers[li].image = love.graphics.newImage(file)
+            else
+                local map = love.image.newImageData(file)
+                level.layers[li].map = map
+                for y = 0, map:getHeight() - 1 do
+                    for x = 0, map:getWidth() - 1 do
+                        local _, g, _, _ = map:getPixel(x, y)
+                        level.checkpoints = math.max(level.checkpoints, g * 255 / 16)
+                    end
+                end
+            end
+        end
     end
     level.width = level.layers[1].map:getWidth()
     level.height = level.layers[1].map:getHeight()
@@ -24,7 +38,7 @@ function Level:sample(layer, uv)
         return 256, 0, 0, 1
     end
     local r, g, b, a = layer.map:getPixel(uv.x, uv.y)
-    return math.ceil(r * 255 / 8), g, b, a
+    return math.ceil(r * 255 / 8), math.ceil(g * 255 / 16), b, a
 end
 
 function Level:sampleDown(layer, uv)
@@ -36,7 +50,7 @@ function Level:sampleDown(layer, uv)
     for y = uv.y, layer.map:getHeight() - 1 do
         local r, g, b, a = layer.map:getPixel(uv.x, y)
         if a >= 0.5 then
-            return math.ceil(r * 255 / 8), g, b, a
+            return math.ceil(r * 255 / 8), math.ceil(g * 255 / 16), b, a
         end
     end
     return 0, 0, 0, 0
@@ -51,5 +65,5 @@ function Level:getPixel(pos)
             end
         end
     end
-    return 1, 0, 0
+    return 0, 0, 0
 end

@@ -14,7 +14,7 @@ local player
 local camera = { lastPosition = nil, position = nil }
 function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
-    level = Level.load("levels/jungle_rush/", 4)
+    level = Level.load("levels/jungle_rush/")
     player = Player.new()
     CANVAS = love.graphics.newCanvas(SIZE.x, SIZE.y)
 end

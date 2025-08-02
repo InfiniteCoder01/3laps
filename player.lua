@@ -12,6 +12,8 @@ function Player.new()
         lastJump = false,
         shadowZ = 0,
         lastShadowZ = 0,
+
+        checkpoint = 0
     }
     setmetatable(player, Player)
     return player
@@ -45,8 +47,18 @@ function Player:update(level)
 
     local grounded
     do
-        local z, _, _ = sample3(self.position)
+        local z, g, _ = sample3(self.position)
+
         grounded = self.position.z <= z + 0.06
+        if (self.checkpoint == 0 or self.checkpoint == level.checkpoints) and g == 1 then
+            self.checkpoint = g
+            print("NEW LAP")
+        elseif g == self.checkpoint + 1 then
+            self.checkpoint = g
+            print("NEW CHECKPOINT")
+        end
+
+        -- Controls
         local targetVelocity = wasd * (sneak and 2 or grounded and 3 or 4)
         self.velocity.x = self.velocity.x + (targetVelocity.x - self.velocity.x) * 0.5
         self.velocity.y = self.velocity.y + (targetVelocity.y - self.velocity.y) * 0.5
