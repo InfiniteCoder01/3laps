@@ -1,13 +1,14 @@
 Level = {}
 Level.__index = Level
+Level.TOTAL_LAPS = 3
 
 function Level.load(path)
     local level = { layers = {}, checkpoints = 0 }
     local files = love.filesystem.getDirectoryItems(path)
     for _, file in ipairs(files) do
-        local idx_str = file:gmatch("%d+")()
-        if idx_str then -- Layer image
-            local idx = tonumber(idx_str)
+        local idxStr = file:gmatch("%d+")()
+        if idxStr then -- Layer image
+            local idx = tonumber(idxStr)
             local li = math.floor((idx + 1) / 2)
             file = path .. "/" .. file
 
@@ -19,7 +20,7 @@ function Level.load(path)
                 for y = 0, map:getHeight() - 1 do
                     for x = 0, map:getWidth() - 1 do
                         local _, g, _, _ = map:getPixel(x, y)
-                        level.checkpoints = math.max(level.checkpoints, g * 255 / 16)
+                        level.checkpoints = math.max(level.checkpoints, math.floor(g * 255 / 16))
                     end
                 end
             end
@@ -38,7 +39,7 @@ function Level:sample(layer, uv)
         return 256, 0, 0, 1
     end
     local r, g, b, a = layer.map:getPixel(uv.x, uv.y)
-    return math.ceil(r * 255 / 8), math.ceil(g * 255 / 16), b, a
+    return math.floor(r * 255 / 8), math.floor(g * 255 / 16), b, a
 end
 
 function Level:sampleDown(layer, uv)
@@ -50,7 +51,7 @@ function Level:sampleDown(layer, uv)
     for y = uv.y, layer.map:getHeight() - 1 do
         local r, g, b, a = layer.map:getPixel(uv.x, y)
         if a >= 0.5 then
-            return math.ceil(r * 255 / 8), math.ceil(g * 255 / 16), b, a
+            return math.floor(r * 255 / 8), math.floor(g * 255 / 16), b, a
         end
     end
     return 0, 0, 0, 0

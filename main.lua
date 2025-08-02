@@ -7,11 +7,30 @@ TICK_RATE = 20
 TICK_TIME = 1 / TICK_RATE
 SIZE = Vector.new(160, 144)
 
+-- Title
+local font = love.graphics.newImageFont("fonts/big.png",
+    " abcdefghijklmnopqrstuvwxyz" ..
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
+    "123456789.,!?-+/():;%&`'*#=[]\"")
+local fontSmall = love.graphics.newFont("fonts/pansyhand.ttf", 16, "normal")
+
+TEXT = {
+    time = 0.0,
+    title = love.graphics.newText(font),
+    actionbar = love.graphics.newText(font),
+}
+
+function TEXT:setTitle(title, time)
+    self.title:setf(title, SIZE.x, "center")
+    self.time = time or 1
+end
+
+love.window.setTitle("3 Laps")
 love.window.setMode(SIZE.x * 4, SIZE.y * 4, { resizable = true })
 
 local level
 local player
-local camera = { lastPosition = nil, position = nil }
+local camera = { lastPosition = nil, position = nil, velocity = Vector.new(0, 0) }
 function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
     level = Level.load("levels/jungle_rush/")
@@ -20,29 +39,23 @@ function love.load()
 end
 
 local function fixedUpdate()
+    TEXT.time = TEXT.time - 0.05
     player:update(level)
 
     -- Update camera
-    do
-        local targetCameraPosition = player.position - Vector.new(0, player.position.z) + player.velocity * 30
-        targetCameraPosition.x = math.min(math.max(targetCameraPosition.x, SIZE.x / 2), level.width - SIZE.x / 2)
-        targetCameraPosition.y = math.min(math.max(targetCameraPosition.y, SIZE.y / 2), level.height - SIZE.y / 2)
-        if not camera.position then
-            camera.position = targetCameraPosition
-            camera.lastPosition = camera.position
-        else
-            local lerp = player.velocity:magnitudeSquared() < 0.05 and 0.3 or 0.05
-            camera.lastPosition = camera.position
-            camera.position = camera.position + (targetCameraPosition - camera.position) * lerp
-        end
-    end
+    camera.lastPosition = camera.position
+    camera.velocity = camera.velocity + (player.velocity - camera.velocity) * 0.1
+    camera.position = player.position - Vector.new(0, player.position.z) + camera.velocity * 5
+    camera.position.x = math.min(math.max(camera.position.x, SIZE.x / 2), level.height - SIZE.x / 2)
+    camera.position.y = math.min(math.max(camera.position.y, SIZE.y / 2), level.height - SIZE.y / 2)
+    if not camera.lastPosition then camera.lastPosition = camera.position end
 end
 
 local function draw(interpolate)
     -- Set camera
     love.graphics.push()
     do
-        local pos = interpolate(camera.position, camera.lastPosition)
+        local pos = interpolate(camera.position, camera.lastPosition):round()
         local offset = SIZE / 2 - pos
         love.graphics.translate(offset.x, offset.y)
     end
@@ -54,8 +67,12 @@ local function draw(interpolate)
         for j = #playersToRender, 1, -1 do
             local p = playersToRender[j]
             local pos = interpolate(p.position, p.lastPosition)
-            local r, _, _, a = level:sampleDown(i, pos)
-            if a >= 0.5 and pos.z + 2.0 < r then
+            local r1, _, _, a1 = level:sampleDown(i, pos - Vector.new(p.size.x / 2, 0, 0))
+            local r2, _, _, a2 = level:sampleDown(i, pos)
+            local r3, _, _, a3 = level:sampleDown(i, pos + Vector.new(p.size.x / 2, 0, 0))
+            if (a1 >= 0.5 and pos.z + 2.0 < r1) or
+               (a2 >= 0.5 and pos.z + 2.0 < r2) or
+               (a3 >= 0.5 and pos.z + 2.0 < r3) then
                 table.remove(playersToRender, j)
                 p:draw(interpolate)
 
@@ -88,6 +105,10 @@ local function draw(interpolate)
         love.graphics.setColor(1, 1, 1, 0.1)
         love.graphics.draw(playerRegion.image, playerRegion.x, playerRegion.y)
         love.graphics.setColor(1, 1, 1, 1)
+    end
+
+    if TEXT.time > 0 then
+        love.graphics.draw(TEXT.title, 0, SIZE.y / 3 * 2)
     end
 end
 
