@@ -211,7 +211,6 @@ function Player:draw(interpolate)
     love.graphics.rectangle("fill", x, y, w, h)
 
     -- Eyes
-    print(self.velocity.y)
     local xo, yo = math.min(math.max(self.velocity.x, -1), 1), math.min(math.max(self.velocity.y, -1), 1)
     xo, yo = math.floor(xo + 0.5), math.floor(yo + 0.5)
     if not self.lxo or xo ~= 0 then self.lxo = xo end
