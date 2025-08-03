@@ -55,7 +55,7 @@ function Player:update(level)
         grounded = self.position.z <= z + 0.06
 
         -- Checkpoints
-        if self.lap > 0 then
+        if self.lap > 0 and self.lap <= Level.TOTAL_LAPS then
             self.checkpointTime = self.checkpointTime + 0.05
             self.totalTime = self.totalTime + 0.05
         end
@@ -93,7 +93,7 @@ function Player:update(level)
         if (self.checkpoint == 0 or self.checkpoint == level.checkpoints) and g == 1 then
             self.checkpoint = g
             self.lap = self.lap + 1
-            if self.lap > Level.TOTAL_LAPS then
+            if self.lap == Level.TOTAL_LAPS + 1 then
                 TEXT:setTitle({
                     {1, 1, 1}, "FINISH!\n",
                     {0, 0, 1}, fmtTime(self.totalTime),
