@@ -15,8 +15,9 @@ function Player.new()
 
         checkpoint = 0,
         checkpointTime = 0,
-        lap = 0,
         splits = {},
+        lap = 0,
+        totalTime = 0,
     }
     setmetatable(player, Player)
     return player
@@ -54,7 +55,18 @@ function Player:update(level)
         grounded = self.position.z <= z + 0.06
 
         -- Checkpoints
-        self.checkpointTime = self.checkpointTime + 0.05
+        if self.lap > 0 then
+            self.checkpointTime = self.checkpointTime + 0.05
+            self.totalTime = self.totalTime + 0.05
+        end
+
+        local function fmtTime(time)
+            return string.format("%02d:%02d.%02d",
+                            math.floor(time / 60),
+                            math.floor(time) % 60,
+                            math.floor(math.fmod(time, 1) * 100.5))
+        end
+
         local function fmtSplit(list)
             local time = self.checkpointTime
             self.checkpointTime = 0
@@ -63,10 +75,7 @@ function Player:update(level)
             if split then time = time - self.splits[self.checkpoint] end
             self.splits[self.checkpoint] = time
 
-            local timeStr = string.format("%02d:%02d.%02d",
-                math.floor(math.abs(time) / 60),
-                math.floor(math.abs(time)) % 60,
-                math.floor(math.fmod(math.abs(time), 1) * 100.5))
+            local timeStr = fmtTime(math.abs(time))
             if split then
                 if time <= 0 then
                      table.insert(list, {0, 1, 0})
@@ -84,11 +93,18 @@ function Player:update(level)
         if (self.checkpoint == 0 or self.checkpoint == level.checkpoints) and g == 1 then
             self.checkpoint = g
             self.lap = self.lap + 1
-            local title = {
-                {1, 1, 1}, string.format("LAP %d/%d\n", self.lap, Level.TOTAL_LAPS),
-            }
-            if self.lap > 1 then fmtSplit(title) end
-            TEXT:setTitle(title)
+            if self.lap > Level.TOTAL_LAPS then
+                TEXT:setTitle({
+                    {1, 1, 1}, "FINISH!\n",
+                    {0, 0, 1}, fmtTime(self.totalTime),
+                }, 65536)
+            else
+                local title = {
+                    {1, 1, 1}, string.format("LAP %d/%d\n", self.lap, Level.TOTAL_LAPS),
+                }
+                if self.lap > 1 then fmtSplit(title) end
+                TEXT:setTitle(title)
+            end
         elseif g == self.checkpoint + 1 then
             self.checkpoint = g
             local title = {

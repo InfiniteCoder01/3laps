@@ -44,7 +44,10 @@ local function fixedUpdate()
 
     -- Update camera
     camera.lastPosition = camera.position
-    camera.velocity = camera.velocity + (player.velocity - camera.velocity) * 0.1
+    local targetVelocity = Vector.new(player.velocity.x, player.velocity.y)
+    targetVelocity.x = math.min(math.max(targetVelocity.x, -3), 3)
+    targetVelocity.y = math.min(math.max(targetVelocity.y, -3), 3)
+    camera.velocity = camera.velocity + (targetVelocity - camera.velocity):saturate(0.5)
     camera.position = player.position - Vector.new(0, player.position.z) + camera.velocity * 5
     camera.position.x = math.min(math.max(camera.position.x, SIZE.x / 2), level.height - SIZE.x / 2)
     camera.position.y = math.min(math.max(camera.position.y, SIZE.y / 2), level.height - SIZE.y / 2)

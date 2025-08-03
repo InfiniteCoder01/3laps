@@ -105,3 +105,12 @@ function Vector.normalized(v)
 	return v / v:magnitude()
 end
 
+-- vector saturation:
+function Vector.saturate(v, x)
+	local magSq = v:magnitudeSquared()
+	if magSq > x * x then
+		v = v * x / math.sqrt(magSq)
+	end
+	return v
+end
+
