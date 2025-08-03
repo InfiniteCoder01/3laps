@@ -69,8 +69,8 @@ function Player:update(level)
                             math.floor(math.fmod(time, 1) * 100))
         end
 
+        self.checkpointTime = self.checkpointTime + 0.05
         if self.lap > 0 and self.lap <= Level.TOTAL_LAPS then
-            self.checkpointTime = self.checkpointTime + 0.05
             self.totalTime = self.totalTime + 0.05
             TEXT.f3:set(fmtTime(self.totalTime))
         end
@@ -116,7 +116,7 @@ function Player:update(level)
                     -- for _, split in pairs(self.splits) do lapTime = lapTime + split end
                     -- table.insert(title, {1, 1, 1})
                     -- table.insert(title, "LAP: " .. fmtTime(lapTime))
-                end
+                else self.checkpointTime = 0 end
                 TEXT:setTitle(title)
             end
             Player.sfx.checkpoint:play()
