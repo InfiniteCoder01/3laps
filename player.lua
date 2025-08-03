@@ -4,7 +4,7 @@ Player.__index = Player
 
 function Player.new()
     local player = {
-        size = Vector.new(10, 4),
+        size = Vector.new(8, 4),
 
         velocity = Vector.new(0, 0, 0),
         position = Vector.new(PLAYER_START, 0),
