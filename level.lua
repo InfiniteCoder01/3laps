@@ -48,7 +48,7 @@ function Level:sampleDown(layer, uv)
     if not layer or uv.x < 0 or uv.y < 0 or uv.x >= layer.map:getWidth() or uv.y >= layer.map:getHeight() then
         return 256, 0, 0, 1
     end
-    for y = uv.y, layer.map:getHeight() - 1 do
+    for y = uv.y, math.min(uv.y + 24, layer.map:getHeight() - 1) do
         local r, g, b, a = layer.map:getPixel(uv.x, y)
         if a >= 0.5 then
             return math.floor(r * 255 / 8), math.floor(g * 255 / 16), b, a

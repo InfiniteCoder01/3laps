@@ -112,7 +112,7 @@ local function draw(interpolate)
     end
 
     if TEXT.time > 0 then
-        love.graphics.draw(TEXT.title, 0, SIZE.y / 3 * 2)
+        love.graphics.draw(TEXT.title, 0, math.floor(SIZE.y / 5 * 3))
     end
 end
 

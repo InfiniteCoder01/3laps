@@ -66,7 +66,7 @@ function Player:update(level)
         end
 
         local function fmtTime(time)
-            return string.format("%02d:%02d.%02d",
+            return string.format("%02d:%02d.%02d\n",
                             math.floor(time / 60),
                             math.floor(time) % 60,
                             math.floor(math.fmod(time, 1) * 100.5))
@@ -76,9 +76,9 @@ function Player:update(level)
             local time = self.checkpointTime
             self.checkpointTime = 0
 
-            local split = self.splits[self.checkpoint] and true or false
-            if split then time = time - self.splits[self.checkpoint] end
+            local split = self.splits[self.checkpoint]
             self.splits[self.checkpoint] = time
+            if split then time = time - split end
 
             local timeStr = fmtTime(math.abs(time))
             if split then
@@ -107,7 +107,13 @@ function Player:update(level)
                 local title = {
                     {1, 1, 1}, string.format("LAP %d/%d\n", self.lap, Level.TOTAL_LAPS),
                 }
-                if self.lap > 1 then fmtSplit(title) end
+                if self.lap > 1 then
+                    fmtSplit(title)
+                    local lapTime = 0
+                    for _, split in pairs(self.splits) do lapTime = lapTime + split end
+                    table.insert(title, {1, 1, 1})
+                    table.insert(title, "LAP: " .. fmtTime(lapTime))
+                end
                 TEXT:setTitle(title)
             end
             Player.sfx.checkpoint:play()
