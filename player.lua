@@ -66,7 +66,7 @@ function Player:update(level)
             return string.format("%02d:%02d.%02d\n",
                             math.floor(time / 60),
                             math.floor(time) % 60,
-                            math.floor(math.fmod(time, 1) * 100.5))
+                            math.floor(math.fmod(time, 1) * 100))
         end
 
         if self.lap > 0 and self.lap <= Level.TOTAL_LAPS then
