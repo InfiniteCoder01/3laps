@@ -17,7 +17,7 @@ local fontSmall = love.graphics.newFont("fonts/pansyhand.ttf", 16, "normal")
 TEXT = {
     time = 0.0,
     title = love.graphics.newText(font),
-    actionbar = love.graphics.newText(font),
+    f3 = love.graphics.newText(fontSmall),
 }
 
 function TEXT:setTitle(title, time)
@@ -50,6 +50,7 @@ local function fixedUpdate()
     targetVelocity.y = math.min(math.max(targetVelocity.y, -3), 3)
     camera.velocity = camera.velocity + (targetVelocity - camera.velocity):saturate(0.5)
     camera.position = player.position - Vector.new(0, player.position.z) + camera.velocity * 5
+    -- camera.position = player.position
     camera.position.x = math.min(math.max(camera.position.x, SIZE.x / 2), level.height - SIZE.x / 2)
     camera.position.y = math.min(math.max(camera.position.y, SIZE.y / 2), level.height - SIZE.y / 2)
     if not camera.lastPosition then camera.lastPosition = camera.position end
@@ -114,6 +115,7 @@ local function draw(interpolate)
     if TEXT.time > 0 then
         love.graphics.draw(TEXT.title, 0, math.floor(SIZE.y / 5 * 3))
     end
+    love.graphics.draw(TEXT.f3, 8, 0)
 end
 
 -- Update (emulate tick rate)

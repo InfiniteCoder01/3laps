@@ -62,16 +62,17 @@ function Player:update(level)
         grounded = self.position.z <= z + 0.06
 
         -- Checkpoints
-        if self.lap > 0 and self.lap <= Level.TOTAL_LAPS then
-            self.checkpointTime = self.checkpointTime + 0.05
-            self.totalTime = self.totalTime + 0.05
-        end
-
         local function fmtTime(time)
             return string.format("%02d:%02d.%02d\n",
                             math.floor(time / 60),
                             math.floor(time) % 60,
                             math.floor(math.fmod(time, 1) * 100.5))
+        end
+
+        if self.lap > 0 and self.lap <= Level.TOTAL_LAPS then
+            self.checkpointTime = self.checkpointTime + 0.05
+            self.totalTime = self.totalTime + 0.05
+            TEXT.f3:set(fmtTime(self.totalTime))
         end
 
         local function fmtSplit(list)
@@ -139,7 +140,7 @@ function Player:update(level)
                 Player.sfx.boost:play()
                 self.velocity = self.velocity * 10
             end
-            self.velocity.z = 3.6
+            if b ~= 128 then self.velocity.z = 3.6 end
         elseif not jump and self.lastJump and self.velocity.z > 0 then
             self.velocity.z = self.velocity.z * 0.5
         end
