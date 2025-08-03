@@ -39,7 +39,7 @@ function Level:sample(layer, uv)
         return 256, 0, 0, 1
     end
     local r, g, b, a = layer.map:getPixel(uv.x, uv.y)
-    return math.floor(r * 255 / 8), math.floor(g * 255 / 16), b, a
+    return math.floor(r * 255 / 8), math.floor(g * 255 / 16), math.floor(b * 255), a
 end
 
 function Level:sampleDown(layer, uv)
@@ -51,7 +51,7 @@ function Level:sampleDown(layer, uv)
     for y = uv.y, math.min(uv.y + 24, layer.map:getHeight() - 1) do
         local r, g, b, a = layer.map:getPixel(uv.x, y)
         if a >= 0.5 then
-            return math.floor(r * 255 / 8), math.floor(g * 255 / 16), b, a
+            return math.floor(r * 255 / 8), math.floor(g * 255 / 16), math.floor(b * 255), a
         end
     end
     return 0, 0, 0, 0

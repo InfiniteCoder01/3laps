@@ -5,6 +5,8 @@ Player.__index = Player
 function Player.load()
     Player.sfx.checkpoint = love.audio.newSource("sfx/checkpoint.wav", "static")
     Player.sfx.checkpoint:setVolume(0.6)
+    Player.sfx.boost = love.audio.newSource("sfx/boost.wav", "static")
+    Player.sfx.boost:setVolume(0.6)
 end
 
 function Player.new()
@@ -56,7 +58,7 @@ function Player:update(level)
 
     local grounded
     do
-        local z, g, _ = sample3(self.position)
+        local z, g, b = sample3(self.position)
         grounded = self.position.z <= z + 0.06
 
         -- Checkpoints
@@ -133,6 +135,10 @@ function Player:update(level)
         self.velocity.y = self.velocity.y + (targetVelocity.y - self.velocity.y) * 0.5
         self.velocity.z = self.velocity.z - 0.8
         if jump and grounded then
+            if b == 255 then
+                Player.sfx.boost:play()
+                self.velocity = self.velocity * 10
+            end
             self.velocity.z = 3.6
         elseif not jump and self.lastJump and self.velocity.z > 0 then
             self.velocity.z = self.velocity.z * 0.5
