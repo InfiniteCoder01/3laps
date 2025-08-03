@@ -156,11 +156,19 @@ function Player:update(level)
         local start = self.position
         for i = 1, math.ceil(total) do
             local pos = start + step * math.min(i, total)
-            local z = sample3(pos)
+            local z, _, b = sample3(pos)
             if pos.z <= z then
                 if v.z ~= 0 then
-                    if v.z < 0 then self.position.z = z end
-                    return true
+                    if v.z < 0 then
+                        self.position.z = z
+                        if b == 128 then
+                            local hvel = self.velocity * Vector.new(1, 1, 0)
+                            local factor = hvel:magnitudeSquared() > 5 and -0.95 or -0.8
+                            self.velocity.z = self.velocity.z * factor
+                            return false
+                        end
+                    end
+                    return true 
                 end
 
                 if pos.z + STEP_HEIGHT >= z then
