@@ -209,5 +209,17 @@ function Player:draw(interpolate)
     local w, h = 8, 10
     local x, y = round(pos.x - w / 2), round(pos.y - pos.z - h)
     love.graphics.rectangle("fill", x, y, w, h)
+
+    -- Eyes
+    print(self.velocity.y)
+    local xo, yo = math.min(math.max(self.velocity.x, -1), 1), math.min(math.max(self.velocity.y, -1), 1)
+    xo, yo = math.floor(xo + 0.5), math.floor(yo + 0.5)
+    if not self.lxo or xo ~= 0 then self.lxo = xo end
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("fill", x + 1 + xo, y + 1 + yo, 2, 3)
+    love.graphics.rectangle("fill", x + w - 2 - 1 + xo, y + 1 + yo, 2, 3)
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.rectangle("fill", x + 1 + xo + math.max(self.lxo, 0), y + 2 + yo * 2, 1, 1)
+    love.graphics.rectangle("fill", x + w - 3 + xo + math.max(self.lxo, 0), y + 2 + yo * 2, 1, 1)
     love.graphics.setColor(1, 1, 1, 1)
 end
