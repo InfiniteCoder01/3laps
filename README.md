@@ -4,5 +4,5 @@ Runs on the web through [standalone love.js player](https://github.com/2dengine/
 
 ## Attribution
 Really nice fonts:
-Big: https://www.love2d.org/wiki/Tutorial:Fonts_and_Text
-Small: https://prettypinkpansy.itch.io/pansy-hand
+- Big: https://www.love2d.org/wiki/Tutorial:Fonts_and_Text
+- Small: https://prettypinkpansy.itch.io/pansy-hand

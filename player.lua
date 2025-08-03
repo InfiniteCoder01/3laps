@@ -1,6 +1,11 @@
 PLAYER_START = Vector.new(96, 96)
-Player = {}
+Player = { sfx = {} }
 Player.__index = Player
+
+function Player.load()
+    Player.sfx.checkpoint = love.audio.newSource("sfx/checkpoint.wav", "static")
+    Player.sfx.checkpoint:setVolume(0.6)
+end
 
 function Player.new()
     local player = {
@@ -105,13 +110,15 @@ function Player:update(level)
                 if self.lap > 1 then fmtSplit(title) end
                 TEXT:setTitle(title)
             end
+            Player.sfx.checkpoint:play()
         elseif g == self.checkpoint + 1 then
             self.checkpoint = g
             local title = {
-                {1, 1, 1}, string.format("CHECKPOINT %d/%d\n", self.checkpoint - 1, level.checkpoints),
+                {1, 1, 1}, string.format("CHECKPOINT %d/%d\n", self.checkpoint - 1, level.checkpoints - 1),
             }
             fmtSplit(title)
             TEXT:setTitle(title)
+            Player.sfx.checkpoint:play()
         end
 
         -- Controls
