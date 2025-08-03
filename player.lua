@@ -111,10 +111,10 @@ function Player:update(level)
                 }
                 if self.lap > 1 then
                     fmtSplit(title)
-                    local lapTime = 0
-                    for _, split in pairs(self.splits) do lapTime = lapTime + split end
-                    table.insert(title, {1, 1, 1})
-                    table.insert(title, "LAP: " .. fmtTime(lapTime))
+                    -- local lapTime = 0
+                    -- for _, split in pairs(self.splits) do lapTime = lapTime + split end
+                    -- table.insert(title, {1, 1, 1})
+                    -- table.insert(title, "LAP: " .. fmtTime(lapTime))
                 end
                 TEXT:setTitle(title)
             end
